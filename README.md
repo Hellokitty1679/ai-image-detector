@@ -1,0 +1,353 @@
+
+# 🤖 AI-Generated Image Detection
+
+> 基于像素级映射技术的 AI 生成图像检测系统
+
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-1.10+-red.svg)](https://pytorch.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+## 📖 项目简介
+
+本项目实现了论文 **"Beyond Semantic Features: Pixel-level Mapping for Generalized AI-Generated Image Detection"** (arXiv: 2512.17350, AAAI 2026) 中提出的方法。
+
+### 核心思想
+
+传统的 AI 图像检测器容易过度依赖语义线索，导致对未知生成模型的泛化能力差。本方法通过 **像素级映射**（Pixel-Level Mapping）：
+
+- 🎯 破坏图像的语义结构
+- 🔄 保留像素间的相关性
+- ⚡ 迫使模型关注生成过程中的高频痕迹
+- 📈 显著提升跨模型泛化能力
+
+### 映射公式
+
+**固定映射 (Fixed Mapping)**:
+```
+φ_f(v) = v - round(v/256, 2) × 256
+```
+
+**随机映射 (Random Mapping)**:
+```
+T_c ~ Uniform(-1, 1)^256  (每个通道独立)
+```
+
+---
+
+## ✨ 特性
+
+- ✅ **高精度检测**: 对 GAN 和扩散模型都有优秀的检测能力
+- ⚡ **快速响应**: 基于 ResNet-50，实时图像分析
+- 🔒 **隐私保护**: 本地处理，不上传图像数据
+- 🌐 **Web 界面**: 支持拖拽上传，可视化结果展示
+- 📱 **响应式设计**: 支持桌面和移动设备
+- 🚀 **公网分享**: 支持 ngrok 快速分享给朋友
+
+---
+
+## 🎯 检测能力
+
+| 生成模型类型 | 支持情况 |
+|-------------|---------|
+| **GAN** | ✅ StyleGAN, ProGAN, BigGAN, StarGAN 等 |
+| **扩散模型** | ✅ Stable Diffusion, MidJourney, GLIDE 等 |
+| **跨模型泛化** | ✅ 训练在一种模型，测试在另一种模型 |
+
+---
+
+## 📦 项目结构
+
+```
+ai-image-detector/
+├── 📄 README.md                    # 项目说明文档
+├── 📄 requirements.txt             # Python 依赖
+├── 📄 requirements_web.txt         # Web 应用依赖
+│
+├── 🧠 核心模块
+│   ├── pixel_mapping.py           # 像素级映射模块
+│   ├── detector.py                # 检测器网络 (ResNet-50)
+│   └── datasets.py                # 数据集处理
+│
+├── 🎓 训练测试
+│   ├── train.py                   # 训练脚本
+│   └── test.py                    # 测试脚本
+│
+├── 🌐 Web 应用
+│   ├── app.py                     # Flask 应用 (真实模型)
+│   ├── app_demo.py                # Flask 应用 (演示模式)
+│   ├── app_gradio.py              # Gradio 版本 (可部署到 Hugging Face)
+│   └── templates/
+│       └── index.html             # 前端页面
+│
+├── 🔧 工具脚本
+│   ├── start_web.bat              # 启动 Web 应用 (Windows)
+│   ├── start_ngrok.bat            # 启动 ngrok 公网隧道
+│   ├── push_to_github.bat         # 推送到 GitHub
+│   ├── prepare_sample_data.py     # 准备示例数据集
+│   ├── download_ngrok.py          # 下载 ngrok
+│   ├── run_ngrok.py               # 运行 ngrok
+│   ├── run_training_example.py    # 训练配置示例
+│   └── create_dirs.py             # 创建目录
+│
+├── 📚 文档
+│   ├── README_WEB.md              # Web 应用详细说明
+│   ├── README_HUGGINGFACE.md      # Hugging Face 部署指南
+│   └── GET_STARTED_NOW.md         # 快速开始指南
+│
+├── 🧪 测试验证
+│   ├── test_implementation.py     # 实现验证测试
+│   ├── verify_mapping_numpy.py    # NumPy 版本验证
+│   └── verify_mapping_simple.py   # 简单版本验证
+│
+├── 📁 数据目录 (需要创建)
+│   └── data/
+│       ├── train/
+│       │   ├── real/              # 真实训练图像
+│       │   └── fake/              # AI 生成训练图像
+│       └── test/
+│           ├── real/              # 真实测试图像
+│           └── fake/              # AI 生成测试图像
+│
+└── 📤 输出目录 (自动生成)
+    └── output/
+        ├── best_model.pth         # 最佳模型
+        ├── final_model.pth        # 最终模型
+        └── logs/                  # TensorBoard 日志
+```
+
+---
+
+## 🚀 快速开始
+
+### 1. 环境准备
+
+```bash
+# 克隆项目
+git clone https://github.com/Hellokitty1679/ai-image-detector.git
+cd ai-image-detector
+
+# 安装依赖
+pip install -r requirements.txt
+
+# Web 应用依赖
+pip install -r requirements_web.txt
+```
+
+### 2. 准备数据集
+
+将图像放入以下目录结构：
+
+```
+data/
+├── train/
+│   ├── real/    # 真实图像
+│   └── fake/    # AI 生成图像
+└── test/
+    ├── real/    # 真实图像
+    └── fake/    # AI 生成图像
+```
+
+**推荐数据集**:
+- 真实图像: ImageNet, LSUN, COCO
+- AI 生成图像: ForenSynths, GenImage
+
+### 3. 训练模型
+
+```bash
+# 基础训练
+python train.py \
+  --train_real_dir ./data/train/real \
+  --train_fake_dir ./data/train/fake \
+  --test_real_dir ./data/test/real \
+  --test_fake_dir ./data/test/fake \
+  --mapping_type fixed \
+  --epochs 200 \
+  --batch_size 32
+
+# 快速测试 (小 epochs)
+python train.py \
+  --train_real_dir ./data/train/real \
+  --train_fake_dir ./data/train/fake \
+  --mapping_type fixed \
+  --epochs 10 \
+  --batch_size 16
+```
+
+### 4. 启动 Web 应用
+
+```bash
+# 演示模式 (无需训练模型)
+python app_demo.py
+
+# 真实模型模式
+python app.py --checkpoint ./output/best_model.pth --port 5000
+
+# Windows 快捷方式
+start_web.bat
+```
+
+然后访问: http://localhost:5000
+
+### 5. 公网分享
+
+```bash
+# 下载并安装 ngrok
+python download_ngrok.py
+
+# 配置 authtoken (注册 ngrok 后获取)
+D:\ngrok\ngrok.exe config add-authtoken 您的token
+
+# 启动隧道
+D:\ngrok\ngrok.exe http 5000
+
+# 或使用快捷脚本
+start_ngrok.bat
+```
+
+复制生成的 `https://...ngrok-free.app` 链接分享给朋友！
+
+---
+
+## 📊 技术原理
+
+### 像素级映射可视化
+
+| 像素值 v | round(v/256, 2) | round×256 | 映射后 φ_f(v) |
+|---------|-----------------|----------|--------------|
+| 0 | 0.00 | 0.00 | 0.00 |
+| 1 | 0.00 | 0.00 | 1.00 |
+| 2 | 0.01 | 2.56 | **-0.56** |
+| 3 | 0.01 | 2.56 | **0.44** |
+| 4 | 0.02 | 5.12 | **-1.12** |
+| ... | ... | ... | ... |
+
+**关键观察**:
+- 原始像素值单调递增: 0, 1, 2, 3, 4...
+- 映射后: 0, 1, -0.56, 0.44, -1.12...
+- 语义结构被破坏，像素相关性被保留
+
+### 检测流程图
+
+```
+输入图像
+    ↓
+[像素级映射]  <-- 破坏语义，保留相关性
+    ↓
+[ResNet-50 特征提取]
+    ↓
+[分类器]
+    ↓
+输出: 真实图像 / AI生成图像
+```
+
+---
+
+## 🧪 验证测试
+
+```bash
+# 验证映射公式 (无需依赖)
+python verify_mapping_simple.py
+
+# 验证完整实现 (需要 PyTorch)
+python test_implementation.py
+```
+
+---
+
+## 🌐 部署到 Hugging Face
+
+1. 访问 https://huggingface.co/spaces
+2. 创建新 Space，选择 Gradio
+3. 上传 `app_gradio.py` 和 `requirements.txt`
+4. 等待部署完成
+
+详细步骤见 [README_HUGGINGFACE.md](README_HUGGINGFACE.md)
+
+---
+
+## 📝 实验配置
+
+### 训练超参数
+
+| 参数 | 值 |
+|------|-----|
+| 优化器 | Adam |
+| 学习率 | 2e-4 |
+| β1 / β2 | 0.9 / 0.999 |
+| 权重衰减 | 2e-4 |
+| Batch Size | 128 |
+| Epochs | 200 |
+| 输入尺寸 | 128×128 |
+
+### 模型架构
+
+- **Backbone**: ResNet-50
+- **输出**: 二分类 (真实 / AI生成)
+- **损失函数**: Cross-Entropy
+
+---
+
+## 🔧 API 接口
+
+### POST /detect
+
+分析上传的图像。
+
+```bash
+curl -X POST -F "image=@test.jpg" http://localhost:5000/detect
+```
+
+**响应**:
+```json
+{
+  "prediction": "AI-Generated",
+  "real_probability": 23.45,
+  "fake_probability": 76.55,
+  "confidence": 76.55,
+  "is_fake": true
+}
+```
+
+---
+
+## 📈 项目进展
+
+- ✅ 像素级映射模块 (Fixed + Random)
+- ✅ ResNet-50 检测器
+- ✅ 训练和测试脚本
+- ✅ Flask Web 应用
+- ✅ Gradio 版本 (可部署)
+- ✅ ngrok 公网分享
+- ⏳ 真实模型训练 (需要数据集)
+
+---
+
+## 📚 参考资料
+
+- **论文**: https://arxiv.org/abs/2512.17350
+- **会议**: AAAI 2026
+- **作者**: Chenming Zhou, Jiaan Wang, Yu Li, Lei Li, Juan Cao, Sheng Tang
+
+---
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+## 💡 致谢
+
+感谢论文作者提供的优秀研究工作！
+
+---
+
+<div align="center">
+  <sub>如果这个项目对您有帮助，请给个 ⭐ Star 支持一下！</sub>
+</div>
