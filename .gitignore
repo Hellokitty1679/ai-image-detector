@@ -59,3 +59,26 @@ data/
 # Temporary files
 *.tmp
 *.temp
+
+# Local tool scripts (not tracked in Git)
+# Windows batch scripts
+*.bat
+
+# ngrok scripts
+download_ngrok.py
+run_ngrok.py
+
+# Test and validation scripts
+test_implementation.py
+verify_mapping_numpy.py
+verify_mapping_simple.py
+
+# Local utility scripts
+create_dirs.py
+prepare_sample_data.py
+run_training_example.py
+
+# Additional README files
+GET_STARTED_NOW.md
+README_HUGGINGFACE.md
+README_WEB.md
