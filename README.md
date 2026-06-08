@@ -62,42 +62,23 @@ ai-image-detector/
 ├── 📄 README.md                    # 项目说明文档
 ├── 📄 requirements.txt             # Python 依赖
 ├── 📄 requirements_web.txt         # Web 应用依赖
+├── 📄 .gitignore                   # Git 忽略规则
 │
-├── 🧠 核心模块
-│   ├── pixel_mapping.py           # 像素级映射模块
-│   ├── detector.py                # 检测器网络 (ResNet-50)
+├── 🧠 核心算法模块
+│   ├── pixel_mapping.py           # 像素级映射 (Fixed + Random)
+│   ├── detector.py                # ResNet-50 检测器网络
 │   └── datasets.py                # 数据集处理
 │
-├── 🎓 训练测试
-│   ├── train.py                   # 训练脚本
-│   └── test.py                    # 测试脚本
+├── 🎓 训练与测试
+│   ├── train.py                   # 模型训练脚本
+│   └── test.py                    # 模型测试脚本
 │
 ├── 🌐 Web 应用
-│   ├── app.py                     # Flask 应用 (真实模型)
-│   ├── app_demo.py                # Flask 应用 (演示模式)
+│   ├── app.py                     # Flask 应用 (使用真实模型)
+│   ├── app_demo.py                # Flask 应用 (演示模式，随机预测)
 │   ├── app_gradio.py              # Gradio 版本 (可部署到 Hugging Face)
 │   └── templates/
-│       └── index.html             # 前端页面
-│
-├── 🔧 工具脚本
-│   ├── start_web.bat              # 启动 Web 应用 (Windows)
-│   ├── start_ngrok.bat            # 启动 ngrok 公网隧道
-│   ├── push_to_github.bat         # 推送到 GitHub
-│   ├── prepare_sample_data.py     # 准备示例数据集
-│   ├── download_ngrok.py          # 下载 ngrok
-│   ├── run_ngrok.py               # 运行 ngrok
-│   ├── run_training_example.py    # 训练配置示例
-│   └── create_dirs.py             # 创建目录
-│
-├── 📚 文档
-│   ├── README_WEB.md              # Web 应用详细说明
-│   ├── README_HUGGINGFACE.md      # Hugging Face 部署指南
-│   └── GET_STARTED_NOW.md         # 快速开始指南
-│
-├── 🧪 测试验证
-│   ├── test_implementation.py     # 实现验证测试
-│   ├── verify_mapping_numpy.py    # NumPy 版本验证
-│   └── verify_mapping_simple.py   # 简单版本验证
+│       └── index.html             # 前端页面 (拖拽上传，结果可视化)
 │
 ├── 📁 数据目录 (需要创建)
 │   └── data/
@@ -110,9 +91,9 @@ ai-image-detector/
 │
 └── 📤 输出目录 (自动生成)
     └── output/
-        ├── best_model.pth         # 最佳模型
-        ├── final_model.pth        # 最终模型
-        └── logs/                  # TensorBoard 日志
+        ├── best_model.pth         # 最佳模型权重
+        ├── final_model.pth        # 最终模型权重
+        └── logs/                  # TensorBoard 训练日志
 ```
 
 ---
@@ -176,35 +157,39 @@ python train.py \
 ### 4. 启动 Web 应用
 
 ```bash
-# 演示模式 (无需训练模型)
+# 演示模式 (无需训练模型，随机预测用于界面展示)
 python app_demo.py
 
-# 真实模型模式
+# 真实模型模式 (需要先训练模型)
 python app.py --checkpoint ./output/best_model.pth --port 5000
-
-# Windows 快捷方式
-start_web.bat
 ```
 
 然后访问: http://localhost:5000
 
 ### 5. 公网分享
 
+使用 ngrok 可以快速分享给朋友：
+
 ```bash
-# 下载并安装 ngrok
-python download_ngrok.py
+# 1. 下载安装 ngrok: https://ngrok.com/download
 
-# 配置 authtoken (注册 ngrok 后获取)
-D:\ngrok\ngrok.exe config add-authtoken 您的token
+# 2. 配置 authtoken (注册 ngrok 后获取)
+ngrok config add-authtoken 您的token
 
-# 启动隧道
-D:\ngrok\ngrok.exe http 5000
-
-# 或使用快捷脚本
-start_ngrok.bat
+# 3. 启动隧道 (确保 Flask 应用正在运行)
+ngrok http 5000
 ```
 
 复制生成的 `https://...ngrok-free.app` 链接分享给朋友！
+
+### 6. 部署到 Hugging Face
+
+使用 `app_gradio.py` 可以部署到 Hugging Face Spaces，获得永久公网链接：
+
+1. 访问: https://huggingface.co/spaces
+2. 创建新 Space，选择 **Gradio**
+3. 上传 `app_gradio.py` 和 `requirements.txt`
+4. 等待部署完成，获得永久链接
 
 ---
 
@@ -242,26 +227,51 @@ start_ngrok.bat
 
 ---
 
-## 🧪 验证测试
+## 🧪 快速验证
 
-```bash
-# 验证映射公式 (无需依赖)
-python verify_mapping_simple.py
+可以通过简单的 Python 代码验证像素级映射的效果：
 
-# 验证完整实现 (需要 PyTorch)
-python test_implementation.py
+```python
+import numpy as np
+
+def fixed_mapping(v):
+    return v - round(v / 256, 2) * 256
+
+# 测试连续像素值的映射效果
+for v in range(5):
+    print(f"v={v:3d} -> φ_f(v)={fixed_mapping(v):6.2f}")
 ```
+
+**预期输出**:
+```
+v=  0 -> φ_f(v)=  0.00
+v=  1 -> φ_f(v)=  1.00
+v=  2 -> φ_f(v)= -0.56
+v=  3 -> φ_f(v)=  0.44
+v=  4 -> φ_f(v)= -1.12
+```
+
+可以看到，连续的像素值被映射到"锯齿状"的值，破坏了语义结构。
 
 ---
 
 ## 🌐 部署到 Hugging Face
 
-1. 访问 https://huggingface.co/spaces
-2. 创建新 Space，选择 Gradio
-3. 上传 `app_gradio.py` 和 `requirements.txt`
-4. 等待部署完成
+使用 `app_gradio.py` 可以快速部署到 Hugging Face Spaces，获得永久公网链接：
 
-详细步骤见 [README_HUGGINGFACE.md](README_HUGGINGFACE.md)
+1. 访问: https://huggingface.co/spaces
+2. 创建新 Space:
+   - **Space name**: `ai-image-detector`
+   - **Space SDK**: 选择 **Gradio**
+3. 上传文件:
+   - 将 `app_gradio.py` 重命名为 `app.py`
+   - 创建 `requirements.txt`，内容如下:
+     ```
+     Pillow
+     gradio>=4.0.0
+     ```
+4. 等待部署完成，获得永久链接:
+   - 格式: `https://huggingface.co/spaces/你的用户名/ai-image-detector`
 
 ---
 
